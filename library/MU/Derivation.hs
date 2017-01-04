@@ -10,6 +10,8 @@ import MU.Sym
 import MU.Rule
 import MU.Tree
 
+import Control.Monad (join)
+
 data Step = Step
   Syms -- ^ start
   Rule -- ^ applied rule
@@ -76,4 +78,4 @@ derivations' (Tree syms subs) = concat <$> go syms subs
           return dfsDerivs'
 
       dfs' <- dfsDerivs
-      return $ concat $ derivs:dfs'
+      return . join $ derivs:dfs'
