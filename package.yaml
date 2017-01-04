@@ -1,0 +1,68 @@
+# This YAML file describes your package. Stack will automatically generate a
+# Cabal file when you run `stack build`. See the hpack website for help with
+# this file: <https://github.com/sol/hpack>.
+benchmarks:
+  mu-puzzle-benchmarks:
+    dependencies:
+    - base
+    - mu-puzzle
+    - criterion
+    ghc-options:
+    - -rtsopts
+    - -threaded
+    - -with-rtsopts=-N
+    main: Main.hs
+    source-dirs: benchmark
+category: Other
+description: mu-puzzle is a project trying to solve the MU-puzzle problem as described at https://en.wikipedia.org/wiki/MU_puzzle
+executables:
+  mu-puzzle:
+    dependencies:
+    - base
+    - mu-puzzle
+    ghc-options:
+    - -rtsopts
+    - -threaded
+    - -with-rtsopts=-N
+    main: Main.hs
+    source-dirs: executable
+extra-source-files:
+- CHANGELOG.md
+- LICENSE.md
+- package.yaml
+- README.md
+- stack.yaml
+ghc-options: -Wall
+github: smunix/mu-puzzle
+library:
+  exposed-modules:
+  - MU
+  other-modules:
+  - MU.MU
+  - MU.Rule
+  - MU.Sym
+  - MU.Apply
+  - MU.Tree
+  - MU.Derivation
+  dependencies:
+  - base
+  - mtl
+  source-dirs: library
+license: MIT
+maintainer: Providence Salumu
+name: mu-puzzle
+synopsis: Solving the MU puzzle problem
+tests:
+  mu-puzzle-test-suite:
+    dependencies:
+    - base
+    - mu-puzzle
+    - tasty
+    - tasty-hspec
+    ghc-options:
+    - -rtsopts
+    - -threaded
+    - -with-rtsopts=-N
+    main: Main.hs
+    source-dirs: test-suite
+version: '0.0.1'
