@@ -1,13 +1,29 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, DefaultSignatures, MultiParamTypeClasses, FlexibleInstances, TypeFamilies #-}
 
-module MU.MU ( MU
+module MU.MU ( MUT(..)
+             , MU
              , Flatten(..)
              , To (..)
              , From (..)
+             , lift
              ) where
 
+import Control.Applicative
 import Control.Monad.Identity
-newtype MU a = MU (Identity a) deriving (Functor, Applicative, Monad, Show)
+import Control.Monad.Trans
+
+newtype MUT m a = MUT { unMUT :: m a } deriving (Functor, Applicative, Monad)
+type MU = MUT Identity
+
+instance MonadTrans MUT where
+  lift = MUT
+
+instance (Show (m a)) => Show (MUT m a) where
+  show (MUT m) = show m
+
+instance (Monad m, Alternative m) => Alternative (MUT m) where
+  empty = lift empty
+  (MUT a1) <|> (MUT a2) = MUT (a1 <|> a2)
 
 -- | flatten MU traversable list of MUs
 class Flatten m t a where

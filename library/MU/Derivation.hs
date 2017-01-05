@@ -35,47 +35,37 @@ type Derivations = [Derivation]
 derivations :: Syms -> Syms -> MU Derivations
 derivations start goal = do
   tree' <- tree start
-  derivs' <- derivations' tree'
+  derivs' <- derivations' Nothing tree'
   return $ filter ((== goal) . drvDerived) derivs'
 
-derivations' :: Tree -> MU Derivations
-derivations' (Tree syms subs) = concat <$> go syms subs
+derivations' :: Maybe Derivation -> Tree -> MU Derivations
+derivations' mbDeriv (Tree syms subs) = concat <$> go subs
   where
-    go :: Syms -> [(Rule, MU [Tree])] -> MU [Derivations]
-    go _ [] = return []
-    go syms' (rule':rules') = do
-      let
-        initDeriv :: Derivation
-        initDeriv = Derivation { drvStart   = syms'
-                               , drvSteps   = []
-                               , drvDerived = [] }
-      h <- withRule syms' rule' initDeriv
-      r <- go syms' rules'
+    go :: [(Rule, MU [Tree])] -> MU [Derivations]
+    go [] = return []
+    go (rule':rules') = do
+      h <- withRule syms rule' (maybe
+                                 (Derivation { drvStart   = syms
+                                             , drvSteps   = []
+                                             , drvDerived = [] })
+                                 id
+                                 mbDeriv)
+      r <- go rules'
       return $ h:r
 
     withRule :: Syms -> (Rule, MU [Tree]) -> Derivation -> MU Derivations
     withRule syms' (rle, muTrees) deriv = do
       childTrees <- muTrees
+
       let
-        derivs :: Derivations
-        derivs = [ Derivation { drvStart = drvStart deriv
-                              , drvSteps = Step syms' rle drvDerived':drvSteps deriv
-                              , drvDerived = drvDerived'}
-                 | (Tree drvDerived' _) <- childTrees ]
+        derivs :: [(Derivation, Tree)]
+        derivs = do
+          t@(Tree syms'' _) <- childTrees
+          return $ ( Derivation { drvStart   = drvStart deriv
+                                , drvSteps   = Step syms' rle syms'':drvSteps deriv
+                                , drvDerived = syms'' }
+                   , t)
+      fmap join $ sequence $ do
+        (parent, chdTree) <- derivs
+        return $ (parent { drvSteps = reverse $ drvSteps parent } :) <$> derivations' (Just parent) chdTree
 
-        dfsDerivs :: MU [Derivations]
-        dfsDerivs = sequence $ do
-          chdTree <- childTrees
-          let
-            dfsDerivs' :: MU Derivations
-            dfsDerivs' = do
-              dfsDerivs'' <- derivations' chdTree
-              let
-                fDeriv :: Derivation -> Derivation
-                fDeriv d = d { drvStart = drvStart deriv
-                             , drvSteps = drvSteps deriv ++ drvSteps d }
-              return $ fmap fDeriv dfsDerivs''
-          return dfsDerivs'
-
-      dfs' <- dfsDerivs
-      return . join $ derivs:dfs'

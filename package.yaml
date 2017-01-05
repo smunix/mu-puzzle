@@ -47,6 +47,7 @@ library:
   dependencies:
   - base
   - mtl
+  - transformers
   source-dirs: library
 license: MIT
 maintainer: Providence Salumu
